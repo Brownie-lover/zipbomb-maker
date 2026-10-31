@@ -103,7 +103,7 @@ with zipfile.ZipFile(
     allowZip64=True
 ) as z:
 
-    chunk_char_count = 500_000_000  # 500 million chars per chunk (~500MB)
+    chunk_char_count = 5_000_000  # 500 million chars per chunk (~500MB)
     chunk_bytes = pattern_bytes * chunk_char_count
     total_written_chars = 0
     chunk_counter = 0
