@@ -59,7 +59,7 @@ def parse_size_input(user_input):
 file_count = int(input("Number of text files (recommended: 1 to 3): "))
 
 while True:
-    size_str = input("Target Total Uncompressed Size (e.g., 50 or 100gb, 500mb): ")
+    size_str = input("Target Total Uncompressed Size (e.g., 50 or 100gb, 500mb, 1tb): ")
     total_uncomp = parse_size_input(size_str)
     
     if total_uncomp > 0:
@@ -103,7 +103,7 @@ with zipfile.ZipFile(
     allowZip64=True
 ) as z:
 
-    chunk_char_count = 5_000_000  # 500 million chars per chunk (~500MB)
+    chunk_char_count = 5_000_000  # 5 million chars per chunk (~5MB)
     chunk_bytes = pattern_bytes * chunk_char_count
     total_written_chars = 0
     chunk_counter = 0
@@ -121,14 +121,12 @@ with zipfile.ZipFile(
                 total_written_chars += chunk_char_count
                 chunk_counter += 1
                 
-                # OPTIMIZATION: Only flush and query disk size every 10 chunks 
-                # to completely eliminate the halfway slowdown bottleneck.
+                # Query disk size only every 10 chunks to prevent bottlenecks
                 if chunk_counter % 10 == 0:
                     z.fp.flush()
                     current_compressed = os.path.getsize(zip_filename)
                 
                 if total_written_chars > 0:
-                    # If we haven't queried disk recently, estimate smoothly based on progress
                     if current_compressed == 0:
                         current_compressed = max(total_written_chars * pattern_len / 1000, 1024)
                     real_est_compressed = (current_compressed / total_written_chars) * grand_total_chars
@@ -163,8 +161,7 @@ with zipfile.ZipFile(
                 f.write(pattern_bytes * remainder_chars)
                 total_written_chars += remainder_chars
 
-# Final flush and size check
-z.fp.flush()
+# Context manager automatically handles closing/flushing safely here
 elapsed_time = time.time() - start_time
 final_compressed_bytes = os.path.getsize(zip_filename)
 
